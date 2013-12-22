@@ -47,11 +47,21 @@ class RssAgent
         $db = Sqlite::instance();
         $magnets = $this->getMagnetLinks();
         foreach ($magnets as $magnet) {
-            $title = Torrent::magnet2torrent($magnet, self::WATCH_DIR);
-            $hash = Torrent::magnet2hash($magnet);            
-            $data = Torrent::scrape($hash);
+            $hash = Torrent::magnet2hash($magnet);
+            $title = Torrent::magnet2torrent($magnet, self::WATCH_DIR);            
+            $exists = Sqlite::getTorrent($hash);
+            //var_dump($exists);
+            if (empty($exists)) {
+                echo "Adding "  . substr($title, 0, 50) . " ";
+            } else {
+                continue;
+                //echo "Exists "  . substr($title, 0, 12) . "..";
+            }            
+            
+            $data = Torrent::scrape($hash);            
             $data = $data[$hash];
-            var_dump($data);
+            echo "S:{$data['seeders']} L:{$data['leechers']}\n";
+            //var_dump($data);
             Sqlite::addTorrent(array(
                 'hash' => $hash,
                 'title' => $title,

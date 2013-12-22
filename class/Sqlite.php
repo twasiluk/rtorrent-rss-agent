@@ -13,7 +13,7 @@ class Sqlite
         }
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);        
         
-        $q = @$this->db->exec('CREATE TABLE IF NOT EXISTS torrent (hash varchar(50), title text, date date, seeders int, leechers int, PRIMARY KEY (hash))');        
+        $q = @$this->db->exec('CREATE TABLE IF NOT EXISTS torrent (hash varchar(50) UNIQUE PRIMARY KEY, title text, date date, seeders int, leechers int)');        
     }
     
     public function instance()
@@ -32,19 +32,22 @@ class Sqlite
         $bindings = implode(', ', $holders);
         $insert = "INSERT OR IGNORE INTO {$table} ({$columns}) 
                     VALUES ({$bindings})";
+        //var_dump($insert, $values);
         $stmt = self::instance()->db->prepare($insert);        
      
         foreach ($holders as $k => $v) {
-            $stmt->bindParam($v, $values[$k]);
+            $stmt->bindValue($v, $values[$k]);
         }
      
         $stmt->execute();
         
         if ($table == 'torrent') {
-            $update = "UPDATE torrent SET title = :title WHERE hash = :hash";
-            $stmt2 = self::instance()->db->prepare($update);        
-            $stmt2->bindParam(':title', $values['title']);
-            $stmt2->bindParam(':hash', $values['hash']);           
+            $update = "UPDATE torrent SET title = :title, seeders = :seeders, leechers = :leechers WHERE hash = :hash";
+            $stmt2 = self::instance()->db->prepare($update);            
+            $stmt2->bindValue(':title', $values['title']);
+            $stmt2->bindValue(':seeders', $values['seeders']);
+            $stmt2->bindValue(':leechers', $values['leechers']);
+            $stmt2->bindValue(':hash', $values['hash']);            
             $stmt2->execute();
         }        
     }
@@ -59,25 +62,15 @@ class Sqlite
         return self::insert('torrent', $item);
     }
     
-    public static function listTorrent()
+    public static function getTorrent($hash = null)
     {
-        // Select all data from file db messages table 
-        $result = self::instance()->db->query('SELECT * FROM torrent');
+        $sql = 'SELECT * FROM torrent ';
+        if ($hash) {
+            $sql .= "WHERE hash = '{$hash}' ";            
+        }        
+        $stmt = self::instance()->db->query($sql);
+        $result = $stmt->fetchAll();
  
-        // Loop thru all data from messages table 
-        // and insert it to file db
-        foreach ($result as $m) {
-          // Bind values directly to statement variables
-          $stmt->bindValue(':hash', $m['hash'], SQLITE3_TEXT);
-          $stmt->bindValue(':title', $m['title'], SQLITE3_TEXT);
-          $stmt->bindValue(':date', $m['message'], SQLITE3_TEXT);
-     
-          // Format unix time to timestamp
-          $formatted_time = date('Y-m-d H:i:s', $m['time']);
-          $stmt->bindValue(':time', $formatted_time, SQLITE3_TEXT);
-     
-          // Execute statement
-          $stmt->execute();
-        }
+        return $result;
     }
 }
