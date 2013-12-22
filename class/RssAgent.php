@@ -2,6 +2,7 @@
 
 require_once "XML/RSS.php";
 require_once "class/Torrent.php";
+require_once "class/Sqlite.php";
 
 class RssAgent
 {
@@ -43,9 +44,21 @@ class RssAgent
     
     public function importTorrents()
     {
+        $db = Sqlite::instance();
         $magnets = $this->getMagnetLinks();
         foreach ($magnets as $magnet) {
-            Torrent::magnet2torrent($magnet, self::WATCH_DIR);
+            $title = Torrent::magnet2torrent($magnet, self::WATCH_DIR);
+            $hash = Torrent::magnet2hash($magnet);            
+            $data = Torrent::scrape($hash);
+            $data = $data[$hash];
+            var_dump($data);
+            Sqlite::addTorrent(array(
+                'hash' => $hash,
+                'title' => $title,
+                'seeders' => $data['seeders'],
+                'leechers' => $data['leechers'],
+                'date' => date('Y-m-d'),
+            ));
         }
     }
 }
