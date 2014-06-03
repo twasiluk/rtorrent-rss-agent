@@ -11,7 +11,8 @@ class Sqlite
         if (!$this->db = new PDO('sqlite:' . self::DATABASE)) {
             throw new Exception('Unable to open database');
         }
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);        
+        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
         
         $q = @$this->db->exec('CREATE TABLE IF NOT EXISTS torrent (hash varchar(50) UNIQUE PRIMARY KEY, title text, date date, seeders int, leechers int)');        
     }
@@ -72,5 +73,17 @@ class Sqlite
         $result = $stmt->fetchAll();
  
         return $result;
+    }
+    
+    public static function doesTitleExist($title, $callback)
+    {
+        $sql = 'SELECT * FROM torrent';
+        $stmt = self::instance()->db->query($sql);
+        foreach ($stmt as $row) {            
+            if (call_user_func($callback, $title, $row->title)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

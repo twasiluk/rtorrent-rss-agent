@@ -6,12 +6,14 @@ class Torrent
 {
     const TRACKER = 'udp://tracker.openbittorrent.com:80';
 
-    public static function magnet2torrent($magnet, $directory)
+    public static function magnet2torrent($magnet, $directory = null)
     {
         $torrent = "d10:magnet-uri" . strlen($magnet) . ":{$magnet}e";
         parse_str($magnet, $vars);
         $name = trim($vars['dn']);
-        file_put_contents("{$directory}/{$name}.torrent", $torrent);
+        if ($directory) {
+            file_put_contents("{$directory}/{$name}.torrent", $torrent);
+        }
         return $name;
     }
     

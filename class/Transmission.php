@@ -20,7 +20,7 @@ class Transmission
     public function addMagnet($magnet)
     {
         $cmd =  $this->getCmd() . '--add ' . escapeshellarg($magnet);
-        var_dump($cmd);
+        //var_dump($cmd);
         print `$cmd`;
     }
     
