@@ -4,6 +4,9 @@ require_once "XML/RSS.php";
 require_once "class/Torrent.php";
 require_once "class/Sqlite.php";
 require_once "class/Transmission.php";
+require_once "class/detectlanguage.php";
+
+use \DetectLanguage\DetectLanguage;
 
 class RssAgent
 {
@@ -15,6 +18,7 @@ class RssAgent
     public function __construct()
     {
         $this->loadConfig();
+        DetectLanguage::setApiKey($this->config->language_api_key);
     }
     
     protected function loadConfig($file = self::CONFIG_FILE)
@@ -52,7 +56,7 @@ class RssAgent
             $hash = Torrent::magnet2hash($magnet);
             $title = Torrent::magnet2torrent($magnet /*,self::WATCH_DIR*/);
             
-            if ($this->titleCensor($title)) {
+            if ($this->preTitleCensor($title)) {
                 continue;
             }
             
@@ -65,6 +69,11 @@ class RssAgent
             
             //var_dump($exists);
             if (empty($exists) && empty($exists2)) {
+            
+                if ($this->postTitleCensor($title)) {
+                    continue;
+                }
+                
                 echo "Adding "  . substr($title, 0, 50) . " ";
                 $transmission->addMagnet($magnet);
             } else {
@@ -150,14 +159,40 @@ class RssAgent
         }
     }
     
-    public function titleCensor($title)
+    public function preTitleCensor($title)
     {
         $titleCase = $title;
         $title = strtolower($title);
     
-        if (strpos($title, "hindi")) {
+        if ($this->checkForWords($title, ["hindi", "spanish", "german", "xxx", "porn", "french"])) {
             return true;
-        }   
+        }
+        
+        return false;
+    }
+    
+    public function checkForWords($haystack, $needles = array())
+    {
+        $haystack = strtolower($haystack);
+        foreach ($needles as $needle) {
+            if (strpos($haystack, strtolower($needle)) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public function postTitleCensor($title)
+    {
+        $titleCase = $title;
+        $title = strtolower($title);
+    
+        $languageCode = DetectLanguage::simpleDetect($titleCase);
+        echo "[Lang:{$languageCode}]\n";
+        
+        if ($languageCode != 'en') {            
+            return true;
+        }
     
         return false;
     }
