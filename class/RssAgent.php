@@ -68,14 +68,14 @@ class RssAgent
             }
             
             //var_dump($exists);
-            if (empty($exists) && empty($exists2)) {
-            
+            if (empty($exists) && empty($exists2)) {            
                 if ($this->postTitleCensor($title)) {
-                    continue;
+                    echo "Censoring "  . substr($title, 0, 50) . " \n";
+                    //continue;
+                } else {
+                    echo "Adding "  . substr($title, 0, 50) . " ";
+                    $transmission->addMagnet($magnet);
                 }
-                
-                echo "Adding "  . substr($title, 0, 50) . " ";
-                $transmission->addMagnet($magnet);
             } else {
                 $e2 = $exists2 ? 't' : 'f';
                 echo "Exists 2:{$e2} "  . substr($title, 0, 40) . "..\n";
@@ -187,8 +187,9 @@ class RssAgent
         $titleCase = $title;
         $title = strtolower($title);
     
-        $languageCode = DetectLanguage::simpleDetect($titleCase);
-        echo "[Lang:{$languageCode}]\n";
+        $r = $this->parseTitle($title);
+        $languageCode = DetectLanguage::simpleDetect($r->title);
+        echo "[Lang:{$languageCode} of {$r->title}]\n";
         
         if ($languageCode != 'en') {            
             return true;
