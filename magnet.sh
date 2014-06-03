@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /media/S1/Watch || exit    # set your watch directory here
+cd /var/lib/transmission-daemon/watch/ || exit    # set your watch directory here
 [[ "$1" =~ xt=urn:btih:([^&/]+) ]] || exit
 hashh=${BASH_REMATCH[1]}
 if [[ "$1" =~ dn=([^&/]+) ]];then
