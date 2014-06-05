@@ -124,7 +124,7 @@ class RssAgent
         $titleDone = 0;
         foreach ($parts as $i => $part) {
             // Check if $part is a year
-            if ($i > 0 && ctype_digit($part) && $part > 1950 && $part <= date('Y')) {
+            if ($i > 0 && ctype_digit($part) && $part > 1990 && $part <= date('Y')) {
                 $titleDone = 1;
                 $result->year = $part;
             }
